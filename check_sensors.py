@@ -1,11 +1,14 @@
-import yaml
+import json
+from typing import Any
+
 import pandas as pd
+import yaml
 
 
-def read_config() -> dict[str, int | str]:
+def read_config() -> dict[str, Any]:
     """Reading settings from the YAML configuration file."""
-    with open("config.yml", "r") as file:
-        config = yaml.safe_load(file)
+    with open("config.yml") as file:
+        config: dict[str, Any] = yaml.safe_load(file)
 
         return config
 
@@ -39,17 +42,23 @@ def filter_overdue_sensors(data: pd.DataFrame, max_days: int) -> pd.DataFrame:
     return overdue
 
 
+def export_to_json(data: pd.DataFrame, filename: str) -> None:
+    """Export sensor data to a formatted JSON file."""
+    records = data.to_dict(orient="records")
+
+    # Write the JSON file
+    with open(filename, "w") as file:
+        json.dump(records, file, indent=2)
+
+
 config = read_config()
-print(config)
 
 sensors = read_sensors()
-print(sensors)
 
 calibrations = read_calibrations()
-print(calibrations)
 
 data = join_sensor_data(sensors, calibrations)
-print(data)
 
 overdue = filter_overdue_sensors(data, config["max_days_since_calibration"])
-print(overdue)
+
+export_to_json(overdue, config["output_file"])
